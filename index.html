@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mail Inspection Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14171C;
+    --desk:#0F1216;
+    --folder:#D8C79E;
+    --folder-dark:#C7B584;
+    --folder-shadow:#00000055;
+    --paper:#F4EFDD;
+    --line:#B9AC88;
+    --danger:#B3231C;
+    --danger-dark:#7A1712;
+    --safe:#2D6A4F;
+    --safe-dark:#1B4232;
+    --amber:#C9971C;
+    --text:#242017;
+    --muted:#6b6350;
+    --tag-bg:#EAE1C4;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top left, #1A1F26 0%, var(--desk) 55%),
+      repeating-linear-gradient(45deg, #00000012 0 2px, transparent 2px 6px);
+    color:var(--text);
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+
+  /* Header */
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:.18em;
+    font-size:11px;
+    color:#8FA0AE;
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px;height:8px;border-radius:50%;
+    background:#4AD991;
+    box-shadow:0 0 8px #4AD991;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1{
+    font-family:'Special Elite', monospace;
+    color:#EFE7D2;
+    font-size:clamp(28px,4vw,40px);
+    margin:0 0 6px;
+    letter-spacing:.01em;
+  }
+  .sub{
+    color:#7C8896;
+    font-size:14px;
+    margin:0 0 28px;
+    max-width:560px;
+    line-height:1.5;
+  }
+
+  /* Case file / folder */
+  .folder{
+    position:relative;
+    background:var(--folder);
+    border-radius:4px 10px 10px 10px;
+    box-shadow:0 24px 48px -12px var(--folder-shadow), 0 2px 0 var(--folder-dark) inset;
+    padding:30px;
+    padding-top:44px;
+  }
+  .tab{
+    position:absolute;
+    top:-22px; left:28px;
+    background:var(--folder);
+    border-radius:8px 8px 0 0;
+    padding:6px 18px 10px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    color:#5A4E2E;
+    box-shadow:0 -2px 0 var(--folder-dark) inset;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap:22px;
+  }
+  @media (max-width:760px){ .grid{grid-template-columns:1fr;} }
+
+  /* Paper / input panel */
+  .paper{
+    background:
+      linear-gradient(var(--paper), var(--paper)) padding-box;
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:20px 20px 18px;
+    box-shadow: 3px 3px 0 var(--folder-dark);
+    position:relative;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .field input, .field textarea{
+    width:100%;
+    border:none;
+    border-bottom:1.5px dashed var(--line);
+    background:transparent;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:14.5px;
+    color:var(--text);
+    padding:5px 2px 8px;
+    resize:vertical;
+  }
+  .field textarea{min-height:150px; line-height:1.5; border-bottom:none; border:1px dashed var(--line); border-radius:2px; padding:10px;}
+  .field input:focus, .field textarea:focus{outline:2px solid var(--amber); outline-offset:2px;}
+
+  .samples{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .chip-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    background:var(--tag-bg);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:6px 12px;
+    cursor:pointer;
+    color:var(--text);
+  }
+  .chip-btn:hover{background:#DFD3AC;}
+
+  .scan-btn{
+    width:100%;
+    background:var(--ink);
+    color:#EFE7D2;
+    border:none;
+    border-radius:4px;
+    padding:14px;
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:.08em;
+    font-size:13px;
+    cursor:pointer;
+    transition:transform .12s ease, background .2s ease;
+  }
+  .scan-btn:hover{background:#252B33;}
+  .scan-btn:active{transform:scale(.98);}
+  .scan-btn:disabled{opacity:.6; cursor:default;}
+
+  .adv{
+    margin-top:14px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .adv summary{cursor:pointer; letter-spacing:.08em;}
+  .adv-body{margin-top:10px; display:flex; flex-direction:column; gap:8px;}
+  .adv-body label{display:flex; align-items:center; gap:6px; font-size:11px;}
+  .adv-body input[type="text"]{
+    width:100%; font-size:12px; padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:#fff;
+  }
+
+  /* Analysis panel */
+  .analysis{
+    position:relative;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:20px;
+    box-shadow: 3px 3px 0 var(--folder-dark);
+    min-height:340px;
+    overflow:hidden;
+  }
+  .idle{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    gap:10px;
+    min-height:300px;
+  }
+  .idle .glyph{font-size:34px;}
+
+  /* scanning sweep */
+  .scanning{min-height:300px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px;}
+  .lamp{
+    width:70%;
+    height:6px;
+    background:linear-gradient(90deg, transparent, var(--amber), transparent);
+    border-radius:4px;
+    animation:sweep 1.1s ease-in-out infinite;
+    box-shadow:0 0 18px var(--amber);
+  }
+  @keyframes sweep{
+    0%{transform:translateY(-40px); opacity:.2;}
+    50%{opacity:1;}
+    100%{transform:translateY(40px); opacity:.2;}
+  }
+  .scanning-label{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted); letter-spacing:.08em;}
+
+  /* result */
+  .result-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .verdict-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase;}
+
+  .stamp{
+    font-family:'Special Elite', monospace;
+    display:inline-block;
+    font-size:26px;
+    padding:8px 16px;
+    border:4px solid currentColor;
+    border-radius:6px;
+    transform:rotate(-7deg) scale(1);
+    letter-spacing:.05em;
+    animation: stampIn .38s cubic-bezier(.2,1.6,.4,1);
+    position:relative;
+  }
+  .stamp::after{
+    content:"";
+    position:absolute; inset:-2px;
+    border-radius:6px;
+    background:radial-gradient(circle at 30% 30%, currentColor 0, transparent 60%);
+    opacity:.08;
+    pointer-events:none;
+  }
+  @keyframes stampIn{
+    0%{transform:rotate(-7deg) scale(3); opacity:0;}
+    60%{opacity:1;}
+    100%{transform:rotate(-7deg) scale(1); opacity:1;}
+  }
+  .stamp.danger{color:var(--danger);}
+  .stamp.safe{color:var(--safe);}
+
+  .score-row{margin:18px 0 6px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); display:flex; justify-content:space-between;}
+  .gauge{
+    height:10px;
+    border-radius:6px;
+    background:linear-gradient(90deg, var(--safe) 0%, var(--amber) 55%, var(--danger) 100%);
+    position:relative;
+    margin-bottom:4px;
+  }
+  .gauge-marker{
+    position:absolute; top:-4px;
+    width:3px; height:18px;
+    background:var(--ink);
+    border-radius:2px;
+    transition:left .5s ease;
+  }
+
+  .evidence-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:20px 0 8px;
+  }
+  .tags{display:flex; flex-wrap:wrap; gap:7px;}
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    background:var(--tag-bg);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:5px 8px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .tag .pt{color:var(--danger); font-weight:600;}
+  .tag.pt-safe .pt{color:var(--safe);}
+  .empty-evidence{font-size:12px; color:var(--muted); font-style:italic;}
+
+  .source-note{
+    margin-top:16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--muted);
+    border-top:1px dashed var(--line);
+    padding-top:10px;
+    line-height:1.5;
+  }
+
+  footer{
+    max-width:920px; margin:26px auto 0;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:#5C6773;
+    line-height:1.6;
+  }
+  footer b{color:#8FA0AE;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Signal Analysis Unit &mdash; Desk 4</div>
+  <h1>Mail Inspection Desk</h1>
+  <p class="sub">Drop a suspicious email on the desk. The inspector flags the tells &mdash; urgency language, disguised links, mismatched senders &mdash; and stamps a verdict.</p>
+
+  <div class="folder">
+    <div class="tab">EVIDENCE&nbsp;#&nbsp;<span id="caseNum">001</span></div>
+    <div class="grid">
+      <!-- INPUT -->
+      <div class="paper">
+        <div class="field">
+          <label for="sender">Claimed sender / display name</label>
+          <input id="sender" type="text" placeholder="e.g. Chase Bank Security">
+        </div>
+        <div class="field">
+          <label for="subject">Subject</label>
+          <input id="subject" type="text" placeholder="e.g. Unusual activity on your account">
+        </div>
+        <div class="field">
+          <label for="body">Message body</label>
+          <textarea id="body" placeholder="Paste the email text here..."></textarea>
+        </div>
+        <div class="samples">
+          <button class="chip-btn" data-sample="phish">Load phishing sample</button>
+          <button class="chip-btn" data-sample="legit">Load legit sample</button>
+        </div>
+        <button class="scan-btn" id="scanBtn">Scan email &rarr;</button>
+
+        <details class="adv">
+          <summary>Advanced: connect a live model</summary>
+          <div class="adv-body">
+            <label><input type="checkbox" id="useApi"> Use a running BERT inference API instead of the built-in heuristic scorer</label>
+            <input type="text" id="apiUrl" placeholder="http://localhost:8000/predict" value="http://localhost:8000/predict">
+          </div>
+        </details>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div class="analysis" id="analysisPanel">
+        <div class="idle" id="idleState">
+          <div class="glyph">&#128203;</div>
+          <div>No evidence loaded.<br>Paste an email and press Scan.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <b>How this works:</b> by default the desk uses a transparent, in-browser heuristic scorer (link count, urgency phrasing, IP-literal links, sender/display-name mismatches, generic greetings) so you can test it instantly with no backend. Check "Advanced" to point it at a real fine-tuned BERT model served from <code>infer_api.py</code> for production-grade predictions instead.
+  </footer>
+</div>
+
+<script>
+(function(){
+  const bodyEl = document.getElementById('body');
+  const subjectEl = document.getElementById('subject');
+  const senderEl = document.getElementById('sender');
+  const scanBtn = document.getElementById('scanBtn');
+  const panel = document.getElementById('analysisPanel');
+  const idleState = document.getElementById('idleState');
+  const useApiEl = document.getElementById('useApi');
+  const apiUrlEl = document.getElementById('apiUrl');
+  const caseNum = document.getElementById('caseNum');
+
+  const SAMPLES = {
+    phish: {
+      sender: "Wells Fargo Security",
+      subject: "URGENT: Verify your account now",
+      body: "Dear customer,\n\nWe detected unusual activity on your account. Your access will be suspended within 24 hours unless you verify your identity immediately.\n\nClick here to confirm your details: http://wellsfargo-secure-verify.com/login\n\nFailure to act now may result in permanent account restriction.\n\nWells Fargo Security Team"
+    },
+    legit: {
+      sender: "Priya Nair",
+      subject: "Q3 report - draft attached",
+      body: "Hi team,\n\nAttached is the draft Q3 report for review before Friday's meeting. I left a couple of open questions in the timeline section - let me know your thoughts when you get a chance.\n\nThanks,\nPriya"
+    }
+  };
+
+  document.querySelectorAll('[data-sample]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const s = SAMPLES[btn.dataset.sample];
+      senderEl.value = s.sender;
+      subjectEl.value = s.subject;
+      bodyEl.value = s.body;
+    });
+  });
+
+  // ---------- Heuristic scorer (mirrors preprocessing.py's signal set) ----------
+  const URGENCY_PHRASES = [
+    "urgent","immediately","suspended","verify","action required","limited time",
+    "click here","act now","confirm your","password expires","unusual activity",
+    "restricted","locked","final notice","failure to act","permanently deactivated"
+  ];
+  const GENERIC_GREETINGS = ["dear customer","dear user","dear valued customer","dear account holder","dear member"];
+  const BRAND_WORDS = ["bank","paypal","amazon","microsoft","apple","netflix","chase","wells fargo","irs","fedex","ups","dhl","google","dropbox"];
+
+  function analyzeHeuristic(sender, subject, body){
+    const full = `${subject}\n${body}`;
+    const lower = full.toLowerCase();
+    const evidence = [];
+    let score = 8; // small base rate
+
+    // URLs
+    const urls = full.match(/https?:\/\/\S+|www\.\S+/g) || [];
+    if (urls.length){
+      const pts = Math.min(urls.length * 10, 30);
+      score += pts;
+      evidence.push({label: `${urls.length} link${urls.length>1?'s':''} in message`, pts, bad:true});
+    }
+
+    // IP-literal URL
+    const ipUrl = /https?:\/\/\d{1,3}(\.\d{1,3}){3}/.test(full);
+    if (ipUrl){
+      score += 18;
+      evidence.push({label:"Raw IP address used as a link", pts:18, bad:true});
+    }
+
+    // suspicious domain patterns (brand name + extra words, or non-standard TLD chains)
+    urls.forEach(u=>{
+      const brandInUrl = BRAND_WORDS.find(b => u.toLowerCase().includes(b));
+      if (brandInUrl && !new RegExp(`https?://(www\\.)?${brandInUrl}\\.com`).test(u.toLowerCase())){
+        score += 14;
+        evidence.push({label:`Link mimics "${brandInUrl}" but isn't the real domain`, pts:14, bad:true});
+      }
+    });
+
+    // urgency language
+    const urgencyHits = URGENCY_PHRASES.filter(p => lower.includes(p));
+    if (urgencyHits.length){
+      const pts = Math.min(urgencyHits.length * 6, 24);
+      score += pts;
+      evidence.push({label:`${urgencyHits.length} urgency phrase${urgencyHits.length>1?'s':''} ("${urgencyHits.slice(0,2).join('", "')}")`, pts, bad:true});
+    }
+
+    // generic greeting
+    const genericHit = GENERIC_GREETINGS.find(g => lower.includes(g));
+    if (genericHit){
+      score += 10;
+      evidence.push({label:`Generic greeting ("${genericHit}") instead of a name`, pts:10, bad:true});
+    }
+
+    // sender / brand mismatch: claims to be a known brand but body has none of the brand's own domain
+    if (sender){
+      const claimedBrand = BRAND_WORDS.find(b => sender.toLowerCase().includes(b));
+      if (claimedBrand){
+        const hasRealDomain = urls.some(u => new RegExp(`https?://(www\\.)?${claimedBrand}\\.com`).test(u.toLowerCase()));
+        if (urls.length && !hasRealDomain){
+          score += 16;
+          evidence.push({label:`Claims to be "${sender}" but links don't go to their real site`, pts:16, bad:true});
+        }
+      }
+    }
+
+    // exclamation / shouting
+    const exCount = (full.match(/!/g)||[]).length;
+    if (exCount >= 2){
+      score += 6;
+      evidence.push({label:`${exCount} exclamation marks`, pts:6, bad:true});
+    }
+    const capsWords = (full.match(/\b[A-Z]{4,}\b/g)||[]).length;
+    if (capsWords >= 1){
+      score += Math.min(capsWords*4, 10);
+      evidence.push({label:`${capsWords} ALL-CAPS word${capsWords>1?'s':''}`, pts:Math.min(capsWords*4,10), bad:true});
+    }
+
+    // positive (legit) signals
+    if (!urls.length && !urgencyHits.length){
+      evidence.push({label:"No links or urgency language detected", pts:0, bad:false});
+    }
+    if (!genericHit && sender && new RegExp('\\b'+sender.split(' ')[0]+'\\b','i').test(body)===false && body.length>0){
+      // no strong signal either way, skip noisy addition
+    }
+    if (body.trim().length > 0 && !genericHit && /\b(hi|hey|hello)\b/i.test(body.slice(0,40))){
+      evidence.push({label:"Casual, personalized opening", pts:-6, bad:false});
+      score -= 6;
+    }
+
+    score = Math.max(2, Math.min(98, Math.round(score)));
+    return {
+      label: score >= 50 ? "phishing" : "legitimate",
+      phishing_probability: score/100,
+      evidence
+    };
+  }
+
+  async function analyzeViaApi(sender, subject, body, url){
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({sender, subject, body})
+    });
+    if (!res.ok) throw new Error("API returned " + res.status);
+    const data = await res.json();
+    // expects { label, phishing_probability, evidence: [{label, pts, bad}] }
+    return data;
+  }
+
+  function renderScanning(){
+    panel.innerHTML = `
+      <div class="scanning">
+        <div class="lamp"></div>
+        <div class="scanning-label">RUNNING SIGNAL ANALYSIS&hellip;</div>
+      </div>`;
+  }
+
+  function renderResult(result, sourceLabel){
+    const isPhish = result.label === "phishing";
+    const pct = Math.round((result.phishing_probability||0) * 100);
+    const evidence = result.evidence || [];
+
+    const tagsHtml = evidence.length
+      ? evidence.map(e => `
+          <div class="tag ${e.bad ? '' : 'pt-safe'}">
+            <span>${e.label}</span>
+            <span class="pt">${e.pts>0? '+':''}${e.pts||0}</span>
+          </div>`).join('')
+      : `<div class="empty-evidence">No notable signals found.</div>`;
+
+    panel.innerHTML = `
+      <div class="result-head">
+        <div>
+          <div class="verdict-label">Inspector's verdict</div>
+          <div class="stamp ${isPhish?'danger':'safe'}">${isPhish?'PHISHING':'CLEARED'}</div>
+        </div>
+      </div>
+      <div class="score-row"><span>Phishing likelihood</span><span>${pct}%</span></div>
+      <div class="gauge"><div class="gauge-marker" style="left:${pct}%"></div></div>
+      <div class="evidence-title">Evidence flagged</div>
+      <div class="tags">${tagsHtml}</div>
+      <div class="source-note">Scored by: ${sourceLabel}</div>
+    `;
+  }
+
+  function renderError(msg){
+    panel.innerHTML = `
+      <div class="idle">
+        <div class="glyph">&#9888;</div>
+        <div>${msg}</div>
+      </div>`;
+  }
+
+  let caseCount = 1;
+
+  scanBtn.addEventListener('click', async ()=>{
+    const body = bodyEl.value.trim();
+    if (!body){
+      bodyEl.focus();
+      return;
+    }
+    const sender = senderEl.value.trim();
+    const subject = subjectEl.value.trim();
+
+    scanBtn.disabled = true;
+    scanBtn.textContent = "Scanning...";
+    renderScanning();
+    caseNum.textContent = String(caseCount++).padStart(3,'0');
+
+    const useApi = useApiEl.checked;
+    const start = Date.now();
+
+    try {
+      let result, source;
+      if (useApi){
+        try{
+          result = await analyzeViaApi(sender, subject, body, apiUrlEl.value.trim());
+          source = "live BERT model (" + apiUrlEl.value.trim() + ")";
+        } catch(apiErr){
+          result = analyzeHeuristic(sender, subject, body);
+          source = "in-browser heuristic scorer (API unreachable, fell back automatically)";
+        }
+      } else {
+        result = analyzeHeuristic(sender, subject, body);
+        source = "in-browser heuristic scorer (demo mode)";
+      }
+
+      const elapsed = Date.now() - start;
+      const wait = Math.max(0, 700 - elapsed);
+      setTimeout(()=>{
+        renderResult(result, source);
+        scanBtn.disabled = false;
+        scanBtn.textContent = "Scan email →";
+      }, wait);
+
+    } catch(err){
+      renderError("Analysis failed: " + err.message);
+      scanBtn.disabled = false;
+      scanBtn.textContent = "Scan email →";
+    }
+  });
+})();
+</script>
+</body>
+</html>
